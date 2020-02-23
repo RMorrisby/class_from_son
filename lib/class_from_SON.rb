@@ -1,5 +1,5 @@
 require "json"
-require "more-ruby"
+require "more_ruby"
 
 # A utility to convert an input file of string-object notation, e.g. JSON, XML, YAML, and generate code that looks like a class of your desired language
 
@@ -372,10 +372,14 @@ class ClassFromSON
 			error_and_exit "Cannot parse input language #{@mode}; can only parse #{@@input_modes.join(", ")}"
 		end
 
+		# TODO other input languages, e.g. XML, YAML
 		case @mode
 		when :json
-			hash = JSON.parse(source)
-			# TODO other input languages, e.g. XML, YAML
+			begin
+				hash = JSON.parse(source)
+			rescue JSON::ParserError => e
+				error_and_exit "Could not parse supplied string as JSON. Error message : #{e.message}"
+			end
 		else
 			error_and_exit "Cannot parse mode #{@mode}"
 		end

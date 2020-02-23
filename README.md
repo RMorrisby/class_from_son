@@ -9,17 +9,28 @@ Limitations :
 SON : will only process JSON
 Code : will only generate Ruby or Java
 
-Usage : require the gem, then invoke as follows : 
+Usage : require the gem, then invoke
+```
+require 'class_from_son'
 
-ClassFromSON.generate_from_file :ruby, a_file.json
+ClassFromSON.generate_from_file :ruby, "a_file.json"
 
 or
 
 ClassFromSON.generate :ruby, my_json_string, :json
+```
 
+or from the command line :
+```
+ruby -e "require 'class_from_son'; ClassFromSON.generate_from_file :ruby, 'a_file.json'"
+
+or
+
+ruby -e "require 'class_from_son'; ClassFromSON.generate :ruby, my_json_string, :json"
+```
 
 Method parameter explanations :
-
+```
 # Will generate classes from a SON file
 # Regardless of whether or not files are written, this will return an array of hashes; each hash represents a file, with two keys : :name for filename (without extension), and :contents for file contents
 #
@@ -29,9 +40,9 @@ Method parameter explanations :
 # make_file flag defaults to true; set to false if you do not want files to be created by this method
 # force_file flag is false; set to true if you wish to overwrite matching destination files (use with caution!)
 def ClassFromSON.generate_from_file(dest_lang, file, source_lang, make_file = true, force_file = false)
+```
 
-
-
+```
 # Will generate classes from a SON string
 # Regardless of whether or not files are written, this will return an array of hashes; each hash represents a file, with two keys : :name for filename (without extension), and :contents for file contents
 #
@@ -41,3 +52,4 @@ def ClassFromSON.generate_from_file(dest_lang, file, source_lang, make_file = tr
 # make_file flag defaults to true; set to false if you do not want files to be created by this method
 # force_file flag is false; set to true if you wish to overwrite matching destination files (use with caution!)
 def ClassFromSON.generate(dest_lang, source, source_lang, make_file = true, force_file = false)
+```
