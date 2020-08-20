@@ -153,7 +153,7 @@ class ClassFromSON
 		when :java
 			return name.capitalize_first_letter_only + @extension
 		when :ruby
-			return name.downcase + @extension # TODO convert camelcase to underbarised case
+			return name.snakecase + @extension
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
 		end
@@ -174,7 +174,12 @@ class ClassFromSON
 	def generate_class_start(name)
 		case @language
 		when :java
-			start = "public class #{convert_custom_class_type(name)} {"
+			start = <<-START
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class #{convert_custom_class_type(name)} {
+START
 		when :ruby
 			start = "class #{convert_custom_class_type(name)}"
 		else 
@@ -232,7 +237,14 @@ class ClassFromSON
 		code = []
 		# Instance variables
 		attributes.each do |att|
-			code << "\tpublic #{convert_ruby_type_to_type(att[:type], att[:value_types])} #{att[:name]};"
+			if att.contains "_"
+				snakecase_name = att[:name]
+				camelcase_name = att[:name].camelcase
+				code << "\t@JsonProperty(\"#{snakecase_name}\")"
+				code << "\tprivate #{convert_ruby_type_to_type(att[:type], att[:value_types])} #{camelcase_name};"
+			else 
+				code << "\tprivate #{convert_ruby_type_to_type(att[:type], att[:value_types])} #{att[:name]};"
+			end
 		end
 
 		#TODO constructor
