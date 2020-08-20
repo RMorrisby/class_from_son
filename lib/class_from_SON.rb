@@ -257,7 +257,7 @@ START
 		code = []
 		# Instance variables
 		attributes.each do |att|
-			if att.contains "_"
+			if att[:name].include? "_"
 				snakecase_name = att[:name]
 				camelcase_name = att[:name].camelcase
 				code << "\t@JsonProperty(\"#{snakecase_name}\")"
