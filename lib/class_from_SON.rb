@@ -173,14 +173,14 @@ class ClassFromSON
 	# Returns code representing the start of the class
 	def generate_class_start(name)
 		case @language
-		when :java, :java_lombok
+		when :java
 			start = <<-START
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class #{convert_custom_class_type(name)} {
 START
-		when :java_lombok # TODO
+		when :java_lombok
 			start = <<-START
 
 import com.fasterxml.jackson.annotation.JsonProperty;
