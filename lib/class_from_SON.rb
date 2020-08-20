@@ -5,7 +5,7 @@ require "more_ruby"
 
 class ClassFromSON
 
-	@@target_languages = [:java, :ruby]
+	@@target_languages = [:java, :java_lombok, :ruby]
 	@@input_modes = [:json]
 
 	def error(message)
@@ -55,7 +55,7 @@ class ClassFromSON
 	# Translate "Fixnum" into the desired output language
 	def convert_fixnum_to_type
 		case @language
-		when :java
+		when :java, :java_lombok
 			return "int"
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
@@ -65,7 +65,7 @@ class ClassFromSON
 	# Translate "Fixnum" into the desired output language
 	def convert_float_to_type
 		case @language
-		when :java
+		when :java, :java_lombok
 			return "float"
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
@@ -75,7 +75,7 @@ class ClassFromSON
 	# Translate "Fixnum" into the desired output language
 	def convert_boolean_to_type
 		case @language
-		when :java
+		when :java, :java_lombok
 			return "boolean"
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
@@ -85,7 +85,7 @@ class ClassFromSON
 	# Translate "String" into the desired output language
 	def convert_string_to_type
 		case @language
-		when :java
+		when :java, :java_lombok
 			return "String"
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
@@ -97,7 +97,7 @@ class ClassFromSON
 	def convert_array_to_type(value_types)
 		error_and_exit "Detected an array, but could not determine the type of its children; found #{value_types.size} possibilities" unless value_types.size == 1
 		case @language
-		when :java
+		when :java, :java_lombok
 			return "List<#{convert_ruby_type_to_type(value_types[0])}>"
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
@@ -109,7 +109,7 @@ class ClassFromSON
 	def convert_hash_to_type(value_types)
 		error_and_exit "Detected a hash, but could not determine the type of its keys and values; found #{value_types.size} possibilities" unless value_types.size == 2
 		case @language
-		when :java
+		when :java, :java_lombok
 			return "HashMap<#{convert_ruby_type_to_type(value_types[0])}, #{convert_ruby_type_to_type(value_types[1])}>"
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
@@ -119,7 +119,7 @@ class ClassFromSON
 	# Returns code representing the start of the class
 	def convert_custom_class_type(type)
 		case @language
-		when :java, :ruby
+		when :java, :java_lombok, :ruby
 			return type.capitalize_first_letter_only
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
@@ -128,7 +128,7 @@ class ClassFromSON
 
 	def generate_top_level_name
 		case @language
-		when :java
+		when :java, :java_lombok
 			return "generatedFrom#{@mode.capitalize}"
 		when :ruby
 			return "generated_from_#{@mode}"
@@ -140,7 +140,7 @@ class ClassFromSON
 	# Returns an appropriately-formatted classname for the given name
 	def generate_classname(name)
 		case @language
-		when :java, :ruby
+		when :java, :java_lombok, :ruby
 			return name.capitalize_first_letter_only
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
@@ -150,7 +150,7 @@ class ClassFromSON
 	# Returns an appropriately-formatted filename for the given name
 	def generate_filename(name)
 		case @language
-		when :java
+		when :java, :java_lombok
 			return name.capitalize_first_letter_only + @extension
 		when :ruby
 			return name.snakecase + @extension
@@ -161,7 +161,7 @@ class ClassFromSON
 
 	def set_file_extension_for_language
 		case @language
-		when :java
+		when :java, :java_lombok
 			@extension = ".java"
 		when :ruby
 			@extension = ".rb"
@@ -173,11 +173,29 @@ class ClassFromSON
 	# Returns code representing the start of the class
 	def generate_class_start(name)
 		case @language
-		when :java
+		when :java, :java_lombok
 			start = <<-START
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+public class #{convert_custom_class_type(name)} {
+START
+		when :java_lombok # TODO
+			start = <<-START
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@JsonInclude(Include.NON_NULL)
+@NoArgsConstructor // Need @NoArgsConstructor for JSON deserialisation
+@AllArgsConstructor // Need @AllArgsConstructor for @Builder
+@Builder
+@Getter
+@Setter
 public class #{convert_custom_class_type(name)} {
 START
 		when :ruby
@@ -191,7 +209,7 @@ START
 	# Returns code representing the end of the class
 	def generate_class_end
 		case @language
-		when :java
+		when :java, :java_lombok
 			class_end = "}"
 		when :ruby 
 			class_end = "end"
@@ -204,6 +222,8 @@ START
 	def generate_getter_and_setter(type, name)
 		lines = []
 		case @language
+		when :java_lombok
+			# do nothing - Lombok's raison d'etre is to avoid getters & setters
 		when :java
 			class_name = convert_custom_class_type(name)
 			lines << "\t"
@@ -223,7 +243,7 @@ START
 	# Returns code representing each of the supplied attributes
 	def generate_code_from_attributes(attributes)
 		case @language
-		when :java
+		when :java, :java_lombok
 			return generate_java_code_from_attributes(attributes)
 		when :ruby
 			return generate_ruby_code_from_attributes(attributes)

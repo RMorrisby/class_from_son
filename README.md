@@ -7,9 +7,10 @@ If the SON looks to have a nested object structure (e.g. a Contact object looks 
 Limitations :
 
 SON : will only process JSON
-Code : will only generate Ruby or Java
+Code : will only generate Ruby or Java (to generate Java using Lombok, use the :java_lombok symbol)
 
 Usage : require the gem, then invoke
+
 ```
 require 'class_from_son'
 
@@ -21,6 +22,7 @@ ClassFromSON.generate :ruby, my_json_string, :json
 ```
 
 or from the command line :
+
 ```
 ruby -e "require 'class_from_son'; ClassFromSON.generate_from_file :ruby, 'a_file.json'"
 
@@ -30,6 +32,7 @@ ruby -e "require 'class_from_son'; ClassFromSON.generate :ruby, my_json_string, 
 ```
 
 Method parameter explanations :
+
 ```
 # Will generate classes from a SON file
 # Regardless of whether or not files are written, this will return an array of hashes; each hash represents a file, with two keys : :name for filename (without extension), and :contents for file contents
