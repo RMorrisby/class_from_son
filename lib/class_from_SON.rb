@@ -225,13 +225,17 @@ START
 		when :java_lombok
 			# do nothing - Lombok's raison d'etre is to avoid getters & setters
 		when :java
-			class_name = convert_custom_class_type(name)
+			# This is safe even if the name is already in snakecase
+			field_name_for_getter = name.snakecase.pascalcase
+
+			name = name.camelcase if name.include? "_"
+				
 			lines << "\t"
-			lines << "\tpublic #{type} get#{class_name}() {"
+			lines << "\tpublic #{type} get#{field_name_for_getter}() {"
 			lines << "\t\treturn #{name};"
 			lines << "\t}"
 			lines << "\t"
-			lines << "\tpublic void set#{class_name}(#{type} #{name}) {"		
+			lines << "\tpublic void set#{field_name_for_getter}(#{type} #{name}) {"		
 			lines << "\t\tthis.#{name} = #{name};"
 			lines << "\t}"
 		else 
@@ -262,6 +266,7 @@ START
 				camelcase_name = att[:name].camelcase
 				code << "\t@JsonProperty(\"#{snakecase_name}\")"
 				code << "\tprivate #{convert_ruby_type_to_type(att[:type], att[:value_types])} #{camelcase_name};"
+				code << "" # add a new line so that fields are separated & easier to read
 			else 
 				code << "\tprivate #{convert_ruby_type_to_type(att[:type], att[:value_types])} #{att[:name]};"
 			end
