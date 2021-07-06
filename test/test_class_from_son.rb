@@ -19,7 +19,7 @@ class TestEx < Test::Unit::TestCase
 		
 		address_filename = "address.rb"
 		top_level_filename = "generated_from_json.rb"
-		phonenumbers_filename = "phonenumbers.rb"
+		phonenumbers_filename = "phone_numbers.rb"
 
 		expected_address = File.readlines(address_filename).join.chomp # trim off any trailing whitespace (irrelevent for this test)
 		expected_example = File.readlines(top_level_filename).join.chomp # trim off any trailing whitespace (irrelevent for this test)

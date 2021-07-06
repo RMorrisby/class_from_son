@@ -1,8 +1,12 @@
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Address {
-	public String streetAddress;
-	public String city;
-	public String state;
-	public String postalCode;
+
+	private String streetAddress;
+	private String city;
+	private String state;
+	private String postalCode;
 	
 	public String getStreetAddress() {
 		return streetAddress;

@@ -1,6 +1,10 @@
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class PhoneNumbers {
-	public String type;
-	public String number;
+
+	private String type;
+	private String number;
 	
 	public String getType() {
 		return type;

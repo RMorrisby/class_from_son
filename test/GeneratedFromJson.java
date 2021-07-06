@@ -1,12 +1,16 @@
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class GeneratedFromJson {
-	public String firstName;
-	public String lastName;
-	public boolean isAlive;
-	public int age;
-	public Address address;
-	public List<PhoneNumbers> phoneNumbers;
-	public List<String> children;
-	public String spouse;
+
+	private String firstName;
+	private String lastName;
+	private boolean isAlive;
+	private int age;
+	private Address address;
+	private List<PhoneNumbers> phoneNumbers;
+	private List<String> children;
+	private String spouse;
 	
 	public String getFirstName() {
 		return firstName;

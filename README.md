@@ -31,6 +31,12 @@ or
 ruby -e "require 'class_from_son'; ClassFromSON.generate :ruby, my_json_string, :json"
 ```
 
+Advanced use :
+
+```
+ruby -e "require 'class_from_son'; ClassFromSON.generate :ruby, my_json_string, :json, true, false, true, '../write/files/somewhere/else'"
+```
+
 Method parameter explanations :
 
 ```
@@ -42,7 +48,10 @@ Method parameter explanations :
 # source_lang is symbol or nil (if nil, source language will be determined from the file extension)
 # make_file flag defaults to true; set to false if you do not want files to be created by this method
 # force_file flag is false; set to true if you wish to overwrite matching destination files (use with caution!)
-def ClassFromSON.generate_from_file(dest_lang, file, source_lang, make_file = true, force_file = false)
+# lenient_mode flag is true; if the SON contains different objects with the same name (e.g. "data") then these will be treated
+#    as different objects with a _1, _2, etc. suffix. If this flag is false and these different objects are present, then errors will occur
+# custom_file_path is nil; set to an absoulte or relative path to have the new files be written to that location
+def ClassFromSON.generate_from_file(dest_lang, file, source_lang = nil, make_file = true, force_file = false, lenient_mode = true, custom_file_path = nil)
 ```
 
 ```
@@ -54,5 +63,8 @@ def ClassFromSON.generate_from_file(dest_lang, file, source_lang, make_file = tr
 # source_lang is symbol
 # make_file flag defaults to true; set to false if you do not want files to be created by this method
 # force_file flag is false; set to true if you wish to overwrite matching destination files (use with caution!)
-def ClassFromSON.generate(dest_lang, source, source_lang, make_file = true, force_file = false)
+# lenient_mode flag is true; if the SON contains different objects with the same name (e.g. "data") then these will be treated
+#    as different objects with a _1, _2, etc. suffix. If this flag is false and these different objects are present, then errors will occur
+# custom_file_path is nil; set to an absoulte or relative path to have the new files be written to that location
+def ClassFromSON.generate(dest_lang, source, source_lang, make_file = true, force_file = false, lenient_mode = true, custom_file_path = nil)
 ```

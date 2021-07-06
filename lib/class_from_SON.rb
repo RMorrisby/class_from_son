@@ -172,6 +172,7 @@ class ClassFromSON
 
 	# Returns code representing the start of the class
 	def generate_class_start(name)
+		# TODO make this more readable
 		case @language
 		when :java
 			start = <<-START
@@ -199,7 +200,16 @@ import lombok.Setter;
 public class #{convert_custom_class_type(name)} {
 START
 		when :ruby
-			start = "class #{convert_custom_class_type(name)}"
+			case @mode
+			when :json
+			start = <<-START
+require 'json'
+
+class #{convert_custom_class_type(name)}
+START
+			else 
+				error_and_exit "Cannot parse mode #{@mode}"
+			end
 		else 
 			error_and_exit "Could not convert to output language #{@language}"
 		end
@@ -285,7 +295,7 @@ START
 	def generate_ruby_code_from_attributes(attributes)
 		code = []
 		names = []
-		attributes.each {|att| names << att[:name]}
+		attributes.each {|att| names << att[:name].snakecase}
 
 		# Instance variables
 		names.each do |name|
@@ -294,12 +304,74 @@ START
 		code << "" # An empty string is enough to trigger a newline
 
 		# Constructor
-		code << "\tdef initialize(#{names.join(", ")})"
+		# This is deliberately commented out, in favour of self.from_hash
+		code << "\t# Using self.from_hash(hash) is usually better, but this code is here in case you prefer this style of constructor"
+		code << "\t# def initialize(#{names.join(", ")})"
 		names.each do |name|
-			code << "\t\t@#{name} = #{name}"
+			code << "\t\t# @#{name} = #{name}"
 		end
+		code << "\t# end"
+		code
+	end
+
+	# Returns code for a from_SON and to_SON method
+	def generate_from_and_to_methods(classname, attributes)
+		case @language
+		when :java, :java_lombok
+			return generate_java_from_and_to_methods(classname, attributes)
+		when :ruby
+			return generate_ruby_from_and_to_methods(classname, attributes)
+		else 
+			error_and_exit "Could not convert to output language #{@language}"
+		end
+	end
+
+	# Returns Java code for a from_SON and to_SON method
+	def generate_java_from_and_to_methods(classname, attributes)
+		code = []
+		# TODO
+		code
+	end
+
+	# Returns Ruby code for a from_SON and to_SON method
+	def generate_ruby_from_and_to_methods(classname, attributes)
+		code = []
+		names = []
+		attributes.each {|att| names << att[:name].snakecase}
+
+		# from_hash method
+		code << ""
+		code << "\tdef self.from_hash(h)"
+		code << "\t\to = self.new"
+		names.each do |name|
+			code << "\t\to.#{name} = h[:#{name}]"
+		end
+		code << "\t\to"
 		code << "\tend"
 
+		# from_SON method
+		code << ""
+		code << "\tdef self.from_#{@mode}(#{@mode})"
+		case @mode
+		when :json
+			code << "\t\tself.from_hash(JSON.parse(#{@mode}))"
+			# TODO other input languages, e.g. XML, YAML
+		end
+		code << "\tend"
+		
+		# to_SON method
+		code << ""
+		code << "\tdef to_#{@mode}"
+		code << "\t\th = {}"
+		names.each do |name|
+			code << "\t\th[:#{name}] = @#{name}"
+		end
+		case @mode
+		when :json
+			code << "\t\tJSON.generate(h)"
+			# TODO other input languages, e.g. XML, YAML
+		end
+		code << "\tend"
 		code
 	end
 
@@ -337,6 +409,7 @@ START
 		end
 
 		lines << generate_code_from_attributes(attributes)
+		lines << generate_from_and_to_methods(classname, attributes)
 		lines << generate_class_end
 		lines.flatten!
 		this_file[:contents] = lines.join("\n")
@@ -356,13 +429,16 @@ START
 	# source_lang is symbol or nil (if nil, source language will be determined from the file extension)
 	# make_file flag defaults to true; set to false if you do not want files to be created by this method
 	# force_file flag is false; set to true if you wish to overwrite matching destination files (use with caution!)
-	def ClassFromSON.generate_from_file(dest_lang, file, source_lang = nil, make_file = true, force_file = false)
+	# lenient_mode flag is true; if the SON contains different objects with the same name (e.g. "data") then these will be treated
+	#    as different objects with a _1, _2, etc. suffix. If this flag is false and these different objects are present, then errors will occur
+	# custom_file_path is nil; set to an absoulte or relative path to have the new files be written to that location
+	def ClassFromSON.generate_from_file(dest_lang, file, source_lang = nil, make_file = true, force_file = false, lenient_mode = true, custom_file_path = nil)
 
 		error_and_exit "Could not locate file #{file}" unless File.exists?(file)
 
 		source_lang ||= File.extname(file).gsub(".", "")
 		source = File.readlines(file).join
-		ClassFromSON.generate(dest_lang, source, source_lang, make_file, force_file)
+		ClassFromSON.generate(dest_lang, source, source_lang, make_file, force_file, lenient_mode, custom_file_path)
 
 		# o = ClassFromSON.new
 		# o.generate(dest_lang, source, source_lang, make_file)
@@ -376,9 +452,12 @@ START
 	# source_lang is symbol
 	# make_file flag defaults to true; set to false if you do not want files to be created by this method
 	# force_file flag is false; set to true if you wish to overwrite matching destination files (use with caution!)
-	def ClassFromSON.generate(dest_lang, source, source_lang, make_file = true, force_file = false)
+	# lenient_mode flag is true; if the SON contains different objects with the same name (e.g. "data") then these will be treated
+	#    as different objects with a _1, _2, etc. suffix. If this flag is false and these different objects are present, then errors will occur
+	# custom_file_path is nil; set to an absoulte or relative path to have the new files be written to that location
+	def ClassFromSON.generate(dest_lang, source, source_lang, make_file = true, force_file = false, lenient_mode = true, custom_file_path = nil)
 		o = ClassFromSON.new
-		o.generate(dest_lang, source, source_lang, make_file, force_file)
+		o.generate(dest_lang, source, source_lang, make_file, force_file, lenient_mode, custom_file_path)
 	end
 
 	# Will generate classes from a SON string. 
@@ -389,7 +468,10 @@ START
 	# source_lang is symbol
 	# make_file flag defaults to true; set to false if you do not want files to be created by this method
 	# force_file flag is false; set to true if you wish to overwrite matching destination files (use with caution!)
-	def generate(dest_lang, source, source_lang, make_file = true, force_file = false)
+	# lenient_mode flag is true; if the SON contains different objects with the same name (e.g. "data") then these will be treated
+	#    as different objects with a _1, _2, etc. suffix. If this flag is false and these different objects are present, then errors will occur
+	# custom_file_path is nil; set to an absoulte or relative path to have the new files be written to that location
+	def generate(dest_lang, source, source_lang, make_file = true, force_file = false, lenient_mode = true, custom_file_path = nil)
 
 		error_and_exit "Please supply first argument as a Symbol" unless dest_lang.class == Symbol
 
@@ -434,16 +516,46 @@ START
 		top_level_classname = generate_top_level_name
 		output_classes = generate_output_classes(hash, top_level_classname).flatten # returns an array
 
+		# Set the directory that the files will be written into
+		if custom_file_path
+			# This caters for both absolute & relative file paths
+			file_path = File.absolute_path(custom_file_path)
+		else
+			file_path = Dir.getwd
+		end
+
+		# Track the names of the classes/files we have written so far
+		written_file_names = []
+
 		if make_file
 			output_classes.each do |out|
 				name = out[:name_with_ext]
+				# Check the name against the files we have already written
+				if written_file_names.include?(name)
+					if lenient_mode
+						# Let us increment the name, e.g. "data.rb" -> "data_1.rb", "data_2.rb", etc.
+						increment = 1
+						new_name = name.gsub(@extension, "_#{increment}#{@extension}")
+						while written_file_names.include?(new_name)
+							increment += 1
+							new_name = name.gsub(@extension, "_#{increment}#{@extension}")
+						end
+						name = new_name
+					else
+						message = "Want to generate output file #{name}, but a file with that name has already been written by this process. Your SON structure contains 2+ different classes with the same name"
+						error_and_exit(message) 
+					end
+				end
+
+				filename = file_path + File::SEPARATOR + name
 				contents = out[:contents]
 				unless force_file
 					error_and_exit "Want to generate output file #{name}, but that file already exists" if File.exists?(name)
 				end
-				File.open(name, "w+") do |f|
+				File.open(filename, "w+") do |f|
 					f.puts contents
 				end
+				written_file_names << name
 				puts "Wrote out file #{name}"
 			end
 
