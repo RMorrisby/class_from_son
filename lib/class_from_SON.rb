@@ -299,18 +299,18 @@ START
 
 		# Instance variables
 		names.each do |name|
-			code << "\tattr_accessor #{name.to_sym.inspect}"
+			code << "  attr_accessor #{name.to_sym.inspect}"
 		end
 		code << "" # An empty string is enough to trigger a newline
 
 		# Constructor
 		# This is deliberately commented out, in favour of self.from_hash
-		code << "\t# Using self.from_hash(hash) is usually better, but this code is here in case you prefer this style of constructor"
-		code << "\t# def initialize(#{names.join(", ")})"
+		code << "  # Using self.from_hash(hash) is usually better, but this code is here in case you prefer this style of constructor"
+		code << "  # def initialize(#{names.join(", ")})"
 		names.each do |name|
-			code << "\t\t# @#{name} = #{name}"
+			code << "    # @#{name} = #{name}"
 		end
-		code << "\t# end"
+		code << "  # end"
 		code
 	end
 
@@ -341,37 +341,37 @@ START
 
 		# from_hash method
 		code << ""
-		code << "\tdef self.from_hash(h)"
-		code << "\t\to = self.new"
+		code << "  def self.from_hash(h)"
+		code << "    o = self.new"
 		names.each do |name|
-			code << "\t\to.#{name} = h[:#{name}]"
+			code << "    o.#{name} = h[:#{name}]"
 		end
-		code << "\t\to"
-		code << "\tend"
+		code << "    o"
+		code << "  end"
 
 		# from_SON method
 		code << ""
-		code << "\tdef self.from_#{@mode}(#{@mode})"
+		code << "  def self.from_#{@mode}(#{@mode})"
 		case @mode
 		when :json
-			code << "\t\tself.from_hash(JSON.parse(#{@mode}))"
+			code << "    self.from_hash(JSON.parse(#{@mode}))"
 			# TODO other input languages, e.g. XML, YAML
 		end
-		code << "\tend"
+		code << "  end"
 		
 		# to_SON method
 		code << ""
-		code << "\tdef to_#{@mode}"
-		code << "\t\th = {}"
+		code << "  def to_#{@mode}"
+		code << "    h = {}"
 		names.each do |name|
-			code << "\t\th[:#{name}] = @#{name}"
+			code << "    h[:#{name}] = @#{name}"
 		end
 		case @mode
 		when :json
-			code << "\t\tJSON.generate(h)"
+			code << "    JSON.generate(h)"
 			# TODO other input languages, e.g. XML, YAML
 		end
-		code << "\tend"
+		code << "  end"
 		code
 	end
 
