@@ -354,24 +354,35 @@ START
 		code << "  def self.from_#{@mode}(#{@mode})"
 		case @mode
 		when :json
-			code << "    self.from_hash(JSON.parse(#{@mode}))"
+			code << "    self.from_hash(JSON.parse(#{@mode}, :symbolize_names => true))"
 			# TODO other input languages, e.g. XML, YAML
 		end
 		code << "  end"
 		
-		# to_SON method
+		# to_hash method
 		code << ""
-		code << "  def to_#{@mode}"
+		code << "  def to_hash"
 		code << "    h = {}"
 		names.each do |name|
 			code << "    h[:#{name}] = @#{name}"
 		end
+		code << "    h"
+		code << "  end"
+
+		# to_SON method & alias
+		code << ""
+		code << "  def to_#{@mode}"
 		case @mode
 		when :json
-			code << "    JSON.generate(h)"
+			code << "    JSON.generate(to_hash)"
 			# TODO other input languages, e.g. XML, YAML
 		end
 		code << "  end"
+		case @mode
+		when :json
+			code << "  alias to_s to_json"
+			# TODO other input languages, e.g. XML, YAML
+		end
 		code
 	end
 
